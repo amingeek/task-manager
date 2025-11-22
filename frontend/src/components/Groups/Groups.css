@@ -1,0 +1,280 @@
+.groups {
+    min-height: 100vh;
+    background: #f8f9fa;
+    padding: 40px 0;
+}
+
+.groups-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.groups-header h1 {
+    color: #333;
+    font-size: 28px;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* فرم ایجاد گروه */
+.create-group-form {
+    margin-bottom: 30px;
+    animation: slideDown 0.3s ease;
+}
+
+.create-group-form h3 {
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+/* بخش جستجو */
+.search-section {
+    margin-bottom: 30px;
+}
+
+.search-form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.search-form .form-input {
+    flex: 1;
+    min-width: 250px;
+}
+
+/* لیست گروه‌ها */
+.groups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.group-item {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #28a745;
+    transition: all 0.3s ease;
+}
+
+.group-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.group-info h3 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.group-description {
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.group-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.group-meta span {
+    color: #666;
+    font-size: 14px;
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.group-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* اعضای گروه */
+.group-members {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.group-members h4 {
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 16px;
+}
+
+.members-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.member-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.member-role {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.member-role.admin {
+    background: #667eea;
+    color: white;
+}
+
+.member-role.member {
+    background: #6c757d;
+    color: white;
+}
+
+.member-status {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.member-status.accepted {
+    background: #28a745;
+    color: white;
+}
+
+.member-status.pending {
+    background: #ffc107;
+    color: #212529;
+}
+
+/* وضعیت خالی */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state-sub {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-top: 8px;
+}
+
+/* انیمیشن */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+    .groups-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .header-actions {
+        justify-content: center;
+    }
+
+    .group-header {
+        flex-direction: column;
+    }
+
+    .group-actions {
+        justify-content: flex-start;
+    }
+
+    .search-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-form .form-input {
+        min-width: auto;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .members-list {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .member-item {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .groups {
+        padding: 20px 0;
+    }
+
+    .group-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .group-actions {
+        flex-direction: column;
+    }
+
+    .group-actions .btn {
+        text-align: center;
+    }
+}

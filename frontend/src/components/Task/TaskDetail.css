@@ -1,0 +1,424 @@
+.task-detail {
+    min-height: 100vh;
+    background: #f8f9fa;
+    padding: 30px 0;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.task-header h1 {
+    color: #333;
+    font-size: 28px;
+    margin: 0;
+    flex: 1;
+}
+
+.task-status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #ffc107;
+    color: #212529;
+}
+
+.status-in_progress {
+    background: #17a2b8;
+    color: white;
+}
+
+.status-completed {
+    background: #28a745;
+    color: white;
+}
+
+.status-expired {
+    background: #dc3545;
+    color: white;
+}
+
+.tabs {
+    display: flex;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 16px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: rgba(102, 126, 234, 0.05);
+    color: #667eea;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: white;
+}
+
+.tab-content {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+/* جزئیات */
+.details-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: #333;
+    min-width: 120px;
+}
+
+.detail-item p, .detail-item span {
+    color: #666;
+    margin: 0;
+    flex: 1;
+}
+
+/* پیشرفت */
+.progress-panel {
+    max-width: 600px;
+}
+
+.progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.progress-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+}
+
+.progress-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-notes textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.progress-notes textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.completion-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* فایل‌ها */
+.files-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.upload-section {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+}
+
+.upload-area {
+    margin-top: 16px;
+}
+
+.file-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.uploading {
+    color: #667eea;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.empty-files {
+    text-align: center;
+    color: #666;
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #666;
+}
+
+.file-uploader {
+    font-size: 12px;
+    color: #999;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* وضعیت اعضا */
+.members-progress-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.members-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.member-progress-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 600;
+    color: #333;
+    min-width: 120px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+}
+
+.member-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-small {
+    width: 100px;
+    height: 6px;
+}
+
+.approved-badge {
+    background: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.loading {
+    text-align: center;
+    padding: 60px;
+    color: #666;
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+    .task-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .file-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .file-actions {
+        justify-content: flex-start;
+    }
+
+    .member-progress-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .member-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .progress-bar {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .task-detail {
+        padding: 20px 0;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    .member-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
