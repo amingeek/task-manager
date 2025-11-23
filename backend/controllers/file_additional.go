@@ -4,10 +4,10 @@ package controllers
 
 import (
 	"net/http"
-	"time"
 	"task-manager/config"
 	"task-manager/models"
 	"task-manager/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +39,7 @@ func ApproveGroupTaskFile(c *gin.Context) {
 		return
 	}
 
-	if task.GroupID == nil || *task.GroupID != convertStringToUint(groupID) {
+	if task.GroupID == nil || *task.GroupID != StringToUint(groupID) {
 		utils.ErrorResponse(c, http.StatusForbidden, "این تسک متعلق به این گروه نیست")
 		return
 	}

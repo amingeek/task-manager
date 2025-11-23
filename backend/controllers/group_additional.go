@@ -1,10 +1,8 @@
 // backend/controllers/group_additional.go
-
 package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"task-manager/config"
 	"task-manager/models"
 	"task-manager/utils"
@@ -12,54 +10,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetGroups - دریافت تمام گروه‌های کاربر
-func GetGroups(c *gin.Context) {
-	userID := c.GetUint("userID")
-
-	var groups []models.Group
-	if err := config.DB.Joins("JOIN group_members ON group_members.group_id = groups.id").
-		Where("group_members.user_id = ? AND group_members.accepted = ?", userID, true).
-		Preload("Members.User").
-		Preload("Creator").
-		Preload("Tasks").
-		Find(&groups).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در دریافت گروه‌ها")
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "OK", groups)
-}
-
-// GetGroup - دریافت جزئیات یک گروه
-func GetGroup(c *gin.Context) {
+// GetGroupDetails - دریافت جزئیات یک گروه
+func GetGroupDetails(c *gin.Context) {
 	userID := c.GetUint("userID")
 	groupID := c.Param("id")
 
-	// بررسی اینکه کاربر عضو گروه است
-	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", groupID, userID, true).First(&member).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusForbidden, "شما عضو این گروه نیستید")
+	var group models.Group
+	if err := config.DB.Preload("Members.User").Preload("Creator").Preload("Tasks").
+		First(&group, groupID).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "گروه پیدا نشد")
 		return
 	}
 
-	var group models.Group
-	if err := config.DB.Preload("Members.User").
-		Preload("Creator").
-		Preload("Tasks").
-		First(&group, groupID).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "گروه پیدا نشد")
+	// بررسی عضویت کاربر در گروه
+	var member models.GroupMember
+	if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", groupID, userID, true).
+		First(&member).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusForbidden, "شما عضو این گروه نیستید")
 		return
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "OK", group)
 }
 
-// UpdateGroup - بروزرسانی اطلاعات گروه
+// UpdateGroup - بروزرسانی گروه
 func UpdateGroup(c *gin.Context) {
 	userID := c.GetUint("userID")
 	groupID := c.Param("id")
 
-	var req CreateGroupRequest
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -67,7 +49,8 @@ func UpdateGroup(c *gin.Context) {
 
 	// بررسی اینکه کاربر مدیر گروه است
 	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").First(&member).Error; err != nil {
+	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").
+		First(&member).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه می‌توانند گروه را بروزرسانی کنند")
 		return
 	}
@@ -78,7 +61,6 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	// بروزرسانی فیلدها
 	if req.Name != "" {
 		group.Name = req.Name
 	}
@@ -86,18 +68,8 @@ func UpdateGroup(c *gin.Context) {
 		group.Description = req.Description
 	}
 
-	if err := config.DB.Save(&group).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در بروزرسانی گروه")
-		return
-	}
-
-	// دریافت گروه کامل
-	var updatedGroup models.Group
-	config.DB.Preload("Members.User").
-		Preload("Creator").
-		First(&updatedGroup, groupID)
-
-	utils.SuccessResponse(c, http.StatusOK, "گروه با موفقیت بروزرسانی شد", updatedGroup)
+	config.DB.Save(&group)
+	utils.SuccessResponse(c, http.StatusOK, "گروه با موفقیت بروزرسانی شد", group)
 }
 
 // DeleteGroup - حذف گروه
@@ -107,7 +79,8 @@ func DeleteGroup(c *gin.Context) {
 
 	// بررسی اینکه کاربر مدیر گروه است
 	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").First(&member).Error; err != nil {
+	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").
+		First(&member).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه می‌توانند گروه را حذف کنند")
 		return
 	}
@@ -118,109 +91,73 @@ func DeleteGroup(c *gin.Context) {
 		return
 	}
 
-	// حذف گروه و تمام وابستگی‌های آن
-	if err := config.DB.Delete(&group).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در حذف گروه")
-		return
-	}
-
+	config.DB.Delete(&group)
 	utils.SuccessResponse(c, http.StatusOK, "گروه با موفقیت حذف شد", nil)
-}
-
-// AddMembers - اضافه کردن اعضای جدید به گروه
-func AddMembers(c *gin.Context) {
-	userID := c.GetUint("userID")
-	groupID := c.Param("id")
-
-	var req AddMembersRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// بررسی اینکه کاربر مدیر گروه است
-	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").First(&member).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه می‌توانند اعضا را اضافه کنند")
-		return
-	}
-
-	// اضافه کردن اعضای جدید
-	for _, memberID := range req.UserIDs {
-		// بررسی وجود کاربر
-		var user models.User
-		if err := config.DB.First(&user, memberID).Error; err != nil {
-			continue
-		}
-
-		// بررسی اینکه عضو قبلاً اضافه نشده است
-		var existingMember models.GroupMember
-		if err := config.DB.Where("group_id = ? AND user_id = ?", groupID, memberID).First(&existingMember).Error; err != nil {
-			// عضو جدید است
-			newMember := models.GroupMember{
-				GroupID:  convertStringToUint(groupID),
-				UserID:   memberID,
-				Accepted: false,
-				Role:     "member",
-			}
-			config.DB.Create(&newMember)
-		}
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "اعضا با موفقیت اضافه شدند", nil)
 }
 
 // RemoveMember - حذف عضو از گروه
 func RemoveMember(c *gin.Context) {
 	userID := c.GetUint("userID")
 	groupID := c.Param("id")
-	memberUserID := c.Param("user_id")
+	memberID := c.Param("user_id")
 
 	// بررسی اینکه کاربر مدیر گروه است
-	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").First(&member).Error; err != nil {
+	var adminMember models.GroupMember
+	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", groupID, userID, "admin").
+		First(&adminMember).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه می‌توانند اعضا را حذف کنند")
 		return
 	}
 
 	// حذف عضو
-	if err := config.DB.Where("group_id = ? AND user_id = ?", groupID, memberUserID).Delete(&models.GroupMember{}).Error; err != nil {
+	if err := config.DB.Where("group_id = ? AND user_id = ?", groupID, memberID).
+		Delete(&models.GroupMember{}).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در حذف عضو")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "عضو با موفقیت حذف شد", nil)
+	utils.SuccessResponse(c, http.StatusOK, "عضو با موفقیت از گروه حذف شد", nil)
 }
 
-// AcceptInvitation - پذیرش دعوت جوین گروه
+// AcceptInvitation - پذیرفتن دعوت به گروه
 func AcceptInvitation(c *gin.Context) {
 	userID := c.GetUint("userID")
 	groupID := c.Param("id")
-	memberUserID := c.Param("user_id")
 
-	// بررسی اینکه کاربر درخواست کننده است
-	if userID != convertStringToUint(memberUserID) {
-		utils.ErrorResponse(c, http.StatusForbidden, "تنها خود کاربر می‌تواند دعوت را پذیرفته کند")
-		return
-	}
-
+	// پیدا کردن دعوت
 	var member models.GroupMember
-	if err := config.DB.Where("group_id = ? AND user_id = ?", groupID, memberUserID).First(&member).Error; err != nil {
+	if err := config.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&member).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusNotFound, "دعوت پیدا نشد")
 		return
 	}
 
+	// اگر قبلاً پذیرفته شده
+	if member.Accepted {
+		utils.SuccessResponse(c, http.StatusOK, "شما قبلاً این دعوت را پذیرفته‌اید", member)
+		return
+	}
+
+	// پذیرفتن دعوت
 	member.Accepted = true
 	if err := config.DB.Save(&member).Error; err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در پذیرش دعوت")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "دعوت با موفقیت پذیرفته شد", nil)
+	utils.SuccessResponse(c, http.StatusOK, "دعوت با موفقیت پذیرفته شد", member)
 }
 
-// Helper function
-func convertStringToUint(s string) uint {
-	v, _ := strconv.ParseUint(s, 10, 32)
-	return uint(v)
+func GetPendingInvitations(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var pendingMembers []models.GroupMember
+	if err := config.DB.Where("user_id = ? AND accepted = ?", userID, false).
+		Preload("Group").
+		Preload("Group.Creator").
+		Find(&pendingMembers).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to load pending invitations")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "OK", pendingMembers)
 }

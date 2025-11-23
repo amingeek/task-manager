@@ -17,11 +17,17 @@ type UpdateProgressRequest struct {
 	Notes    string `json:"notes"`
 }
 
-type UpdateGroupProgressRequest struct {
+type UpdateGroupMemberProgressRequest struct {
 	UserID   uint   `json:"user_id" binding:"required"`
 	Progress int    `json:"progress" binding:"required,min=0,max=100"`
 	Notes    string `json:"notes"`
 	Approved bool   `json:"approved"`
+}
+
+type UpdateGroupProgressByMemberRequest struct {
+	UserID   uint   `json:"user_id" binding:"required"`
+	Progress int    `json:"progress" binding:"required,min=0,max=100"`
+	Notes    string `json:"notes"`
 }
 
 // UpdatePersonalProgress - بروزرسانی پیشرفت تسک شخصی
@@ -46,7 +52,7 @@ func UpdatePersonalProgress(c *gin.Context) {
 	var progress models.TaskProgress
 	if err := config.DB.Where("task_id = ? AND user_id = ?", taskID, userID).First(&progress).Error; err != nil {
 		progress = models.TaskProgress{
-			TaskID:   task.ID,
+			TaskID:   StringToUint(taskID),
 			UserID:   userID,
 			Progress: req.Progress,
 			Notes:    req.Notes,
@@ -79,7 +85,7 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 	userID := c.GetUint("userID") // کاربر مدیر
 	taskID := c.Param("id")
 
-	var req UpdateGroupProgressRequest
+	var req UpdateGroupMemberProgressRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -103,7 +109,7 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 	var progress models.GroupTaskProgress
 	if err := config.DB.Where("task_id = ? AND user_id = ?", taskID, req.UserID).First(&progress).Error; err != nil {
 		progress = models.GroupTaskProgress{
-			TaskID:     task.ID,
+			TaskID:     StringToUint(taskID),
 			UserID:     req.UserID,
 			AssignedBy: userID,
 			Progress:   req.Progress,
@@ -174,7 +180,7 @@ func GetTaskProgress(c *gin.Context) {
 		if err := config.DB.Where("task_id = ? AND user_id = ?", taskID, userID).First(&progress).Error; err != nil {
 			// ایجاد رکورد خالی اگر وجود ندارد
 			progress = models.TaskProgress{
-				TaskID:   task.ID,
+				TaskID:   StringToUint(taskID),
 				UserID:   userID,
 				Progress: 0,
 			}
@@ -198,11 +204,82 @@ func GetMyGroupProgress(c *gin.Context) {
 		}
 
 		progress = models.GroupTaskProgress{
-			TaskID:     task.ID,
+			TaskID:     StringToUint(taskID),
 			UserID:     userID,
 			AssignedBy: task.CreatorID,
 			Progress:   0,
 		}
 	}
 	utils.SuccessResponse(c, http.StatusOK, "OK", progress)
+}
+
+// GetPersonalProgress - دریافت پیشرفت تسک شخصی
+func GetPersonalProgress(c *gin.Context) {
+	userID := c.GetUint("userID")
+	taskID := c.Param("id")
+
+	var progress models.TaskProgress
+	if err := config.DB.Where("task_id = ? AND user_id = ?", taskID, userID).First(&progress).Error; err != nil {
+		// اگر رکوردی وجود ندارد، یک رکورد خالی برگردان
+		var task models.Task
+		if err := config.DB.First(&task, taskID).Error; err != nil {
+			utils.ErrorResponse(c, http.StatusNotFound, "تسک پیدا نشد")
+			return
+		}
+
+		progress = models.TaskProgress{
+			TaskID:   StringToUint(taskID),
+			UserID:   userID,
+			Progress: 0,
+		}
+	}
+	utils.SuccessResponse(c, http.StatusOK, "OK", progress)
+}
+
+// GetGroupProgress - دریافت پیشرفت تسک گروهی برای تمام اعضا
+func GetGroupProgress(c *gin.Context) {
+	taskID := c.Param("task_id")
+
+	var progress []models.GroupTaskProgress
+	if err := config.DB.Where("task_id = ?", taskID).
+		Preload("User").
+		Find(&progress).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "خطا در دریافت پیشرفت")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "OK", progress)
+}
+
+// UpdateGroupProgress - بروزرسانی پیشرفت تسک گروهی توسط یک عضو
+func UpdateGroupProgress(c *gin.Context) {
+	userID := c.GetUint("userID")
+	taskID := c.Param("task_id")
+
+	var req UpdateGroupProgressByMemberRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// دریافت یا ایجاد رکورد پیشرفت
+	var progress models.GroupTaskProgress
+	if err := config.DB.Where("task_id = ? AND user_id = ?", taskID, userID).First(&progress).Error; err != nil {
+		// رکورد جدید است
+		progress = models.GroupTaskProgress{
+			TaskID:     StringToUint(taskID),
+			UserID:     userID,
+			AssignedBy: req.UserID,
+			Progress:   req.Progress,
+			Notes:      req.Notes,
+		}
+		config.DB.Create(&progress)
+	} else {
+		// به‌روزرسانی رکورد موجود
+		progress.Progress = req.Progress
+		progress.Notes = req.Notes
+		config.DB.Save(&progress)
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "پیشرفت با موفقیت بروزرسانی شد", progress)
 }

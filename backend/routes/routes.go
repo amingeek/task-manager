@@ -46,14 +46,14 @@ func SetupRoutes(router *gin.Engine) {
 	protected.GET("/tasks/:id/progress", controllers.GetPersonalProgress)
 
 	// ==================== Group Routes ====================
-	protected.GET("/groups", controllers.GetGroups)
-	protected.GET("/groups/:id", controllers.GetGroup)
-	protected.POST("/groups", controllers.CreateGroup)
-	protected.PUT("/groups/:id", controllers.UpdateGroup)
-	protected.DELETE("/groups/:id", controllers.DeleteGroup)
+	protected.GET("/groups", controllers.GetUserGroups)
+	protected.POST("/groups", controllers.CreateGroup)        // اضافه شد
+	protected.GET("/groups/:id", controllers.GetGroupDetails) // اضافه شد
+	protected.PUT("/groups/:id", controllers.UpdateGroup)     // اضافه شد
+	protected.DELETE("/groups/:id", controllers.DeleteGroup)  // اضافه شد
 
 	// Group members
-	protected.POST("/groups/:id/members", controllers.AddMembers)
+	protected.POST("/groups/:id/members", controllers.AddGroupMembers)
 	protected.DELETE("/groups/:id/members/:user_id", controllers.RemoveMember)
 	protected.POST("/groups/:id/members/:user_id/accept", controllers.AcceptInvitation)
 
@@ -66,6 +66,8 @@ func SetupRoutes(router *gin.Engine) {
 	// Group task progress (تسک گروهی)
 	protected.PUT("/groups/:id/tasks/:task_id/progress", controllers.UpdateGroupProgress)
 	protected.GET("/groups/:id/tasks/:task_id/progress", controllers.GetGroupProgress)
+	protected.GET("/groups/invitations", controllers.GetPendingInvitations) // جدید
+	protected.POST("/groups/:id/accept", controllers.AcceptInvitation)      // تغییر مسیر برای سادگی
 
 	// Approve group task files (تایید فایل توسط مدیر)
 	protected.POST("/groups/:id/tasks/:task_id/files/approve", controllers.ApproveGroupTaskFile)
