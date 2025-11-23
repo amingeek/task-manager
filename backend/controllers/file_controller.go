@@ -1,3 +1,4 @@
+// backend/controllers/file_controller.go
 package controllers
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UploadFile - آپلود فایل برای تسک (شخصی یا گروهی)
 func UploadFile(c *gin.Context) {
 	userID := c.GetUint("userID")
 
@@ -44,7 +46,7 @@ func UploadFile(c *gin.Context) {
 	if task.IsGroupTask {
 		// برای تسک گروهی، بررسی عضویت در گروه
 		var member models.GroupMember
-		if err := config.DB.Where("group_id = ? AND user_id = ?", task.GroupID, userID).First(&member).Error; err != nil {
+		if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", task.GroupID, userID, true).First(&member).Error; err != nil {
 			utils.ErrorResponse(c, http.StatusForbidden, "شما به این تسک دسترسی ندارید")
 			return
 		}
@@ -54,6 +56,15 @@ func UploadFile(c *gin.Context) {
 			utils.ErrorResponse(c, http.StatusForbidden, "شما به این تسک دسترسی ندارید")
 			return
 		}
+	}
+
+	// بررسی تعداد فایل‌های آپلود شده
+	var fileCount int64
+	config.DB.Model(&models.File{}).Where("task_id = ?", taskID).Count(&fileCount)
+
+	if task.MaxFiles > 0 && int(fileCount) >= task.MaxFiles {
+		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("حداکثر %d فایل می‌تواند آپلود شود", task.MaxFiles))
+		return
 	}
 
 	// ایجاد پوشه برای ذخیره فایل
@@ -106,6 +117,7 @@ func UploadFile(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusCreated, "فایل با موفقیت آپلود شد", fileRecord)
 }
 
+// GetTaskFiles - دریافت تمام فایل‌های آپلود شده برای یک تسک
 func GetTaskFiles(c *gin.Context) {
 	userID := c.GetUint("userID")
 	taskID := c.Param("id")
@@ -119,7 +131,7 @@ func GetTaskFiles(c *gin.Context) {
 	// بررسی دسترسی
 	if task.IsGroupTask {
 		var member models.GroupMember
-		if err := config.DB.Where("group_id = ? AND user_id = ?", task.GroupID, userID).First(&member).Error; err != nil {
+		if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", task.GroupID, userID, true).First(&member).Error; err != nil {
 			utils.ErrorResponse(c, http.StatusForbidden, "شما به این تسک دسترسی ندارید")
 			return
 		}
@@ -136,6 +148,37 @@ func GetTaskFiles(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "OK", files)
 }
 
+// GetGroupTaskFilesByUser - دریافت فایل‌های آپلود شده توسط یک کاربر برای تسک گروهی
+func GetGroupTaskFilesByUser(c *gin.Context) {
+	userID := c.GetUint("userID")
+	taskID := c.Param("id")
+	uploadUserID := c.Query("user_id")
+
+	var task models.Task
+	if err := config.DB.First(&task, taskID).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "تسک پیدا نشد")
+		return
+	}
+
+	if !task.IsGroupTask {
+		utils.ErrorResponse(c, http.StatusBadRequest, "این تسک یک تسک گروهی نیست")
+		return
+	}
+
+	// بررسی اینکه کاربر مدیر گروه است
+	var member models.GroupMember
+	if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", task.GroupID, userID, true).First(&member).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusForbidden, "شما به این تسک دسترسی ندارید")
+		return
+	}
+
+	var files []models.File
+	config.DB.Where("task_id = ? AND user_id = ?", taskID, uploadUserID).Preload("User").Find(&files)
+
+	utils.SuccessResponse(c, http.StatusOK, "OK", files)
+}
+
+// DownloadFile - دانلود فایل
 func DownloadFile(c *gin.Context) {
 	userID := c.GetUint("userID")
 	fileID := c.Param("id")
@@ -149,7 +192,7 @@ func DownloadFile(c *gin.Context) {
 	// بررسی دسترسی
 	if file.Task.IsGroupTask {
 		var member models.GroupMember
-		if err := config.DB.Where("group_id = ? AND user_id = ?", file.Task.GroupID, userID).First(&member).Error; err != nil {
+		if err := config.DB.Where("group_id = ? AND user_id = ? AND accepted = ?", file.Task.GroupID, userID, true).First(&member).Error; err != nil {
 			utils.ErrorResponse(c, http.StatusForbidden, "شما به این فایل دسترسی ندارید")
 			return
 		}
@@ -169,6 +212,7 @@ func DownloadFile(c *gin.Context) {
 	c.File(file.Filepath)
 }
 
+// DeleteFile - حذف فایل
 func DeleteFile(c *gin.Context) {
 	userID := c.GetUint("userID")
 	fileID := c.Param("id")
@@ -180,7 +224,10 @@ func DeleteFile(c *gin.Context) {
 	}
 
 	// فقط مالک فایل یا سازنده تسک می‌تواند حذف کند
-	if file.UserID != userID && file.Task.CreatorID != userID {
+	isOwner := file.UserID == userID
+	isTaskCreator := file.Task.CreatorID == userID
+
+	if !isOwner && !isTaskCreator {
 		utils.ErrorResponse(c, http.StatusForbidden, "شما اجازه حذف این فایل را ندارید")
 		return
 	}

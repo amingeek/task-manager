@@ -19,4 +19,11 @@ type File struct {
 	User      User           `gorm:"foreignKey:UserID" json:"user"`
 	TaskID    uint           `gorm:"not null" json:"task_id"`
 	Task      Task           `gorm:"foreignKey:TaskID" json:"task"`
+	Approved  bool           `gorm:"default:false" json:"approved"`
+	ApprovedBy *uint         `json:"approved_by"`
+	ApprovedAt *time.Time    `json:"approved_at"`
+}
+
+func (File) TableName() string {
+	return "files"
 }

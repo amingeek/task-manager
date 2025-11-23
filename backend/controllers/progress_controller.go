@@ -1,3 +1,5 @@
+// backend/controllers/progress_controller.go
+
 package controllers
 
 import (
@@ -22,6 +24,7 @@ type UpdateGroupProgressRequest struct {
 	Approved bool   `json:"approved"`
 }
 
+// UpdatePersonalProgress - بروزرسانی پیشرفت تسک شخصی
 func UpdatePersonalProgress(c *gin.Context) {
 	userID := c.GetUint("userID")
 	taskID := c.Param("id")
@@ -71,6 +74,7 @@ func UpdatePersonalProgress(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "پیشرفت با موفقیت بروزرسانی شد", progress)
 }
 
+// UpdateGroupMemberProgress - بروزرسانی پیشرفت عضو توسط مدیر گروه
 func UpdateGroupMemberProgress(c *gin.Context) {
 	userID := c.GetUint("userID") // کاربر مدیر
 	taskID := c.Param("id")
@@ -91,7 +95,7 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 	// بررسی اینکه کاربر مدیر گروه است
 	var member models.GroupMember
 	if err := config.DB.Where("group_id = ? AND user_id = ? AND role = ?", task.GroupID, userID, "admin").First(&member).Error; err != nil {
-		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه می‌توانند پیشرفت را بروزرسانی کنند")
+		utils.ErrorResponse(c, http.StatusForbidden, "فقط مدیران گروه میتوانند پیشرفت را بروزرسانی کنند")
 		return
 	}
 
@@ -111,7 +115,6 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 		progress.Progress = req.Progress
 		progress.Notes = req.Notes
 		progress.AssignedBy = userID
-
 		if req.Approved && !progress.Approved {
 			now := time.Now()
 			progress.Approved = true
@@ -129,7 +132,7 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 		config.DB.Save(&progress)
 	}
 
-	// بررسی اینکه آیا همه اعضا تکمیل کرده‌اند
+	// بررسی اینکه آیا همه اعضا تکمیل کردهاند
 	var allProgress []models.GroupTaskProgress
 	config.DB.Where("task_id = ?", taskID).Find(&allProgress)
 
@@ -149,6 +152,7 @@ func UpdateGroupMemberProgress(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "پیشرفت عضو با موفقیت بروزرسانی شد", progress)
 }
 
+// GetTaskProgress - دریافت پیشرفت تسک (شخصی یا گروهی)
 func GetTaskProgress(c *gin.Context) {
 	userID := c.GetUint("userID")
 	taskID := c.Param("id")
@@ -179,6 +183,7 @@ func GetTaskProgress(c *gin.Context) {
 	}
 }
 
+// GetMyGroupProgress - دریافت پیشرفت شخصی در تسک گروهی
 func GetMyGroupProgress(c *gin.Context) {
 	userID := c.GetUint("userID")
 	taskID := c.Param("id")
@@ -199,6 +204,5 @@ func GetMyGroupProgress(c *gin.Context) {
 			Progress:   0,
 		}
 	}
-
 	utils.SuccessResponse(c, http.StatusOK, "OK", progress)
 }

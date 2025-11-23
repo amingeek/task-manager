@@ -1,5 +1,4 @@
 // backend/config/database.go
-
 package config
 
 import (
@@ -32,7 +31,6 @@ func ConnectDatabase() {
 
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
 	if err != nil {
 		utils.LogError("Failed to connect to database", err)
 		log.Fatal("Failed to connect to database:", err)
@@ -40,10 +38,9 @@ func ConnectDatabase() {
 
 	utils.LogInfo("Database connected successfully")
 
-	// Migration
+	// Migration - انجام migration‌های تمامی models
 	err = DB.AutoMigrate(
 		&models.User{},
-		&models.Streak{},
 		&models.Group{},
 		&models.GroupMember{},
 		&models.Task{},

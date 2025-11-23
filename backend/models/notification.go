@@ -1,4 +1,5 @@
 // backend/models/notification.go
+
 package models
 
 import (
@@ -15,4 +16,11 @@ type Notification struct {
 	UserID    uint           `gorm:"not null" json:"user_id"`
 	Title     string         `gorm:"not null" json:"title"`
 	Message   string         `json:"message"`
+	IsRead    bool           `gorm:"default:false" json:"is_read"`
+	Type      string         `json:"type"` // task_assigned, group_invitation, file_uploaded, etc.
+	RelatedID uint           `json:"related_id"`
+}
+
+func (Notification) TableName() string {
+	return "notifications"
 }
