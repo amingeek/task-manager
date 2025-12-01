@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type TaskStatus string
@@ -16,32 +14,20 @@ const (
 )
 
 type Task struct {
-	ID          uint           `gorm:"primaryKey;autoIncrement" json:"id"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
-	Title       string         `gorm:"not null" json:"title"`
-	Description string         `json:"description"`
-	Status      TaskStatus     `gorm:"default:'pending'" json:"status"`
-	DueDate     *time.Time     `json:"due_date"`
-	StartTime   *time.Time     `json:"start_time"`
-	EndTime     *time.Time     `json:"end_time"`
-	CreatorID   uint           `gorm:"not null" json:"creator_id"`
-	Creator     User           `gorm:"foreignKey:CreatorID" json:"creator"`
-	IsGroupTask bool           `gorm:"default:false" json:"is_group_task"`
-	GroupID     *uint          `json:"group_id"`
-	Group       *Group         `gorm:"foreignKey:GroupID" json:"group,omitempty"`
+	ID          uint       `gorm:"primaryKey" json:"id"`
+	UserID      uint       `json:"user_id" gorm:"index"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      string     `json:"status" gorm:"default:'pending'"`
+	Priority    string     `json:"priority" gorm:"default:'medium'"`
+	DueDate     *time.Time `json:"due_date"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 
-	// فیلدهای جدید
-	RequireFiles bool   `gorm:"default:false" json:"require_files"`
-	MaxFiles     int    `gorm:"default:5" json:"max_files"`
-	AllowTypes   string `json:"allow_types"` // pdf,image,video,etc
-
-	// روابط
-	Files           []File              `json:"files,omitempty"`
-	Progress        []TaskProgress      `json:"progress,omitempty"`
-	GroupProgress   []GroupTaskProgress `json:"group_progress,omitempty"`
-	TaskAssignments []TaskAssignment    `json:"task_assignments,omitempty"`
+	// Relations
+	User     *User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Progress []Progress `json:"progress,omitempty" gorm:"foreignKey:TaskID"`
+	Files    []File     `json:"files,omitempty" gorm:"foreignKey:TaskID"`
 }
 
 type TaskAssignment struct {

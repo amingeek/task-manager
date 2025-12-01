@@ -1,24 +1,28 @@
+// frontend/src/components/Auth/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../../services/api';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import './Auth.css';
 
-export default function Login() {
-    const [form, setForm] = useState({ username: '', password: '' });
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+function Login() {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const { login, loading } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setError('');
+
+        if (!username.trim() || !password.trim()) {
+            setError('نام کاربری و رمز عبور ضروری هستند');
+            return;
+        }
+
         try {
-            const response = await api.post('/login', form);
-            localStorage.setItem('token', response.data.data.token);
-            navigate('/');
-        } catch (error) {
-            alert('خطا در ورود: ' + (error.response?.data?.error || 'نام کاربری یا رمز عبور اشتباه است'));
-        } finally {
-            setLoading(false);
+            await login(username, password);
+        } catch (err) {
+            setError(err.message || 'خطا در ورود');
         }
     };
 
@@ -26,30 +30,40 @@ export default function Login() {
         <div className="auth-container">
             <div className="auth-card">
                 <div className="auth-header">
-                    <h1>ورود به حساب کاربری</h1>
-                    <p>خوش آمدید! لطفا وارد شوید</p>
+                    <h1>🔐 ورود به سیستم</h1>
+                    <p>به تسک منیجر خوش آمدید</p>
                 </div>
+
+                {error && (
+                    <div className="error-message">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
+                        <label htmlFor="username">نام کاربری</label>
                         <input
+                            id="username"
                             type="text"
-                            placeholder="نام کاربری"
-                            value={form.username}
-                            onChange={(e) => setForm({...form, username: e.target.value})}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="نام کاربری خود را وارد کنید"
+                            disabled={loading}
                             className="form-input"
-                            required
                         />
                     </div>
 
                     <div className="form-group">
+                        <label htmlFor="password">رمز عبور</label>
                         <input
+                            id="password"
                             type="password"
-                            placeholder="رمز عبور"
-                            value={form.password}
-                            onChange={(e) => setForm({...form, password: e.target.value})}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="رمز عبور خود را وارد کنید"
+                            disabled={loading}
                             className="form-input"
-                            required
                         />
                     </div>
 
@@ -58,7 +72,7 @@ export default function Login() {
                         className="btn btn-primary auth-btn"
                         disabled={loading}
                     >
-                        {loading ? 'در حال ورود...' : 'ورود'}
+                        {loading ? '⏳ در حال ورود...' : '✅ ورود به سیستم'}
                     </button>
                 </form>
 
@@ -72,3 +86,5 @@ export default function Login() {
         </div>
     );
 }
+
+export default Login;

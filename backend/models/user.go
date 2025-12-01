@@ -2,27 +2,30 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	ID        uint           `gorm:"primaryKey;autoIncrement" json:"id"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Username  string         `gorm:"uniqueIndex;not null;size:255" json:"username"`
-	Email     string         `gorm:"uniqueIndex;not null;size:255" json:"email"`
-	Password  string         `gorm:"not null" json:"-"`
-	FullName  string         `json:"full_name"`
-	Bio       string         `json:"bio"`
-	AvatarURL string         `json:"avatar_url"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email" gorm:"uniqueIndex"`
+	Password  string    `json:"-"`
+	Avatar    string    `json:"avatar"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Relations
+	GroupMembers []GroupMember `json:"group_members,omitempty" gorm:"foreignKey:UserID"`
+	Tasks        []Task        `json:"tasks,omitempty" gorm:"foreignKey:UserID"`
 }
 
 type Streak struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	UserID         uint      `gorm:"uniqueIndex;not null" json:"user_id"`
-	CurrentStreak  int       `gorm:"default:0" json:"current_streak"`
-	LongestStreak  int       `gorm:"default:0" json:"longest_streak"`
-	LastActivityAt time.Time `json:"last_activity_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"user_id" gorm:"index"`
+	Count     int       `json:"count"`
+	LastDate  time.Time `json:"last_date"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Relations
+	User *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }

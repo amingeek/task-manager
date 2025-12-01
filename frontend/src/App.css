@@ -1,94 +1,114 @@
+/* frontend/src/App.css */
+@import './global-theme.css';
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html, body, #root {
+    height: 100%;
+    width: 100%;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    direction: rtl;
 }
 
-.app {
-    min-height: 100vh;
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
 
-/* استایل‌های عمومی */
+.app-container {
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+}
+
+/* بهبود استایل‌های عمومی */
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 16px;
 }
 
-.card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    padding: 24px;
-    margin-bottom: 20px;
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 16px;
+    color: var(--text-secondary);
 }
 
+/* استایل‌های دکمه‌ها */
 .btn {
-    padding: 12px 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
-    display: inline-block;
-    text-align: center;
+    font-family: inherit;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-secondary {
-    background: #f8f9fa;
-    color: #333;
-    border: 1px solid #dee2e6;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: #e9ecef;
+    background-color: var(--bg-secondary);
 }
 
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
+/* استایل‌های فرم */
 .form-group {
     margin-bottom: 20px;
 }
 
-.form-label {
+.form-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .form-input {
     width: 100%;
     padding: 12px;
-    border: 2px solid #e9ecef;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     transition: border-color 0.3s ease;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
 
 .form-input:focus {
@@ -96,19 +116,75 @@ body {
     border-color: #667eea;
 }
 
-/* استایل‌های ریسپانسیو */
+/* پیام‌ها */
+.error-message {
+    background-color: #fee2e2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #fecaca;
+}
+
+.success-message {
+    background-color: #d1fae5;
+    color: #065f46;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #a7f3d0;
+}
+
+/* صفحه‌بندی */
+.page-container {
+    background-color: var(--bg-primary);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.page-header h1 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* ریسپانسیو */
 @media (max-width: 768px) {
     .container {
-        padding: 0 15px;
+        padding: 0 12px;
     }
 
-    .card {
-        padding: 20px;
-        margin-bottom: 15px;
+    .page-container {
+        margin: 10px;
+        padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 
     .btn {
-        padding: 10px 20px;
-        font-size: 13px;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        margin: 8px;
+        padding: 12px;
     }
 }

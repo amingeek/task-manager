@@ -1,155 +1,126 @@
-// frontend/src/services/groups.js
-
 import api from './api';
 
-export const groupsService = {
-  // دریافت تمام گروهها
-  getGroups: async () => {
-    try {
-      const response = await api.get('/groups');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+const groupsService = {
+    // دریافت تمام گروه‌های کاربر
+    getGroups: async () => {
+        try {
+            const response = await api.get('/groups');
+            return response;
+        } catch (error) {
+            console.error('❌ getGroups error:', error);
+            throw error;
+        }
+    },
 
-  // دریافت یک گروه
-  getGroup: async (id) => {
-    try {
-      const response = await api.get(`/groups/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // دریافت یک گروه مشخص
+    getGroup: async (id) => {
+        try {
+            const response = await api.get(`/groups/${id}`);
+            return response;
+        } catch (error) {
+            console.error('❌ getGroup error:', error);
+            throw error;
+        }
+    },
 
-  // ایجاد گروه
-  createGroup: async (name, description, userIds = []) => {
-    try {
-      const response = await api.post('/groups', {
-        name,
-        description,
-        user_ids: userIds,
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // ایجاد گروه جدید
+    createGroup: async (groupData) => {
+        try {
+            const response = await api.post('/groups', groupData);
+            return response;
+        } catch (error) {
+            console.error('❌ createGroup error:', error);
+            throw error;
+        }
+    },
 
-  // بروزرسانی گروه
-  updateGroup: async (id, name, description) => {
-    try {
-      const response = await api.put(`/groups/${id}`, {
-        name,
-        description,
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // به‌روزرسانی گروه
+    updateGroup: async (id, groupData) => {
+        try {
+            const response = await api.put(`/groups/${id}`, groupData);
+            return response;
+        } catch (error) {
+            console.error('❌ updateGroup error:', error);
+            throw error;
+        }
+    },
 
-  // حذف گروه
-  deleteGroup: async (id) => {
-    try {
-      const response = await api.delete(`/groups/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // جستجوی کاربران
+    searchUsers: async (query) => {
+        try {
+            const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+            return response;
+        } catch (error) {
+            console.error('❌ searchUsers error:', error);
+            throw error;
+        }
+    },
 
-  // جستجو گروهها
-  searchGroups: async (query) => {
-    try {
-      const response = await api.get(`/groups/search?q=${query}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // اضافه کردن اعضا به گروه
+    addMembers: async (groupId, memberData) => {
+        try {
+            const response = await api.post(`/groups/${groupId}/members`, memberData);
+            return response;
+        } catch (error) {
+            console.error('❌ addMembers error:', error);
+            throw error;
+        }
+    },
 
-  // اضافه کردن اعضا به گروه
-  addMembers: async (groupId, userIds) => {
-    try {
-      const response = await api.post(`/groups/${groupId}/members`, {
-        user_ids: userIds,
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // حذف یک عضو از گروه
+    removeMember: async (groupId, userId) => {
+        try {
+            const response = await api.delete(`/groups/${groupId}/members/${userId}`);
+            return response;
+        } catch (error) {
+            console.error('❌ removeMember error:', error);
+            throw error;
+        }
+    },
 
-  // حذف عضو از گروه
-  removeMember: async (groupId, userId) => {
-    try {
-      const response = await api.delete(`/groups/${groupId}/members/${userId}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // حذف گروه
+    deleteGroup: async (id) => {
+        try {
+            const response = await api.delete(`/groups/${id}`);
+            return response;
+        } catch (error) {
+            console.error('❌ deleteGroup error:', error);
+            throw error;
+        }
+    },
 
-  // پذیرفتن دعوت گروه
-  acceptInvitation: async (groupId, userId) => {
-    try {
-      const response = await api.post(`/groups/${groupId}/members/${userId}/accept`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // ایجاد تسک گروهی
+    createGroupTask: async (groupId, taskData) => {
+        try {
+            const response = await api.post(`/groups/${groupId}/tasks`, taskData);
+            return response;
+        } catch (error) {
+            console.error('❌ createGroupTask error:', error);
+            throw error;
+        }
+    },
 
-  // ایجاد تسک گروهی
-  createGroupTask: async (groupId, title, description, dueDate, userIds = []) => {
-    try {
-      const response = await api.post(`/groups/${groupId}/tasks`, {
-        title,
-        description,
-        due_date: dueDate,
-        user_ids: userIds,
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // دریافت دعوت‌های در انتظار
+    getPendingInvitations: async () => {
+        try {
+            const response = await api.get('/groups/invitations');
+            return response;
+        } catch (error) {
+            console.error('❌ getPendingInvitations error:', error);
+            throw error;
+        }
+    },
 
-  // دریافت تسکهای گروه
-  getGroupTasks: async (groupId) => {
-    try {
-      const response = await api.get(`/groups/${groupId}/tasks`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
+    // پذیرش دعوت گروه
+    acceptInvitation: async (groupId) => {
+        try {
+            const response = await api.post(`/groups/${groupId}/accept`);
+            return response;
+        } catch (error) {
+            console.error('❌ acceptInvitation error:', error);
+            throw error;
+        }
     }
-  },
-
-  // بروزرسانی تسک گروهی
-  updateGroupTask: async (groupId, taskId, title, description, status) => {
-    try {
-      const response = await api.put(`/groups/${groupId}/tasks/${taskId}`, {
-        title,
-        description,
-        status,
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // حذف تسک گروهی
-  deleteGroupTask: async (groupId, taskId) => {
-    try {
-      const response = await api.delete(`/groups/${groupId}/tasks/${taskId}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
 };
 
 export default groupsService;

@@ -4,21 +4,21 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Notification struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	UserID    uint           `gorm:"not null" json:"user_id"`
-	Title     string         `gorm:"not null" json:"title"`
-	Message   string         `json:"message"`
-	IsRead    bool           `gorm:"default:false" json:"is_read"`
-	Type      string         `json:"type"` // task_assigned, group_invitation, file_uploaded, etc.
-	RelatedID uint           `json:"related_id"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"user_id" gorm:"index"`
+	Type      string    `json:"type"`
+	Title     string    `json:"title"`
+	Message   string    `json:"message"`
+	RelatedID uint      `json:"related_id"`
+	Read      bool      `json:"read" gorm:"default:false"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Relations
+	User *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 
 func (Notification) TableName() string {

@@ -1,3 +1,4 @@
+// frontend/src/components/Dashboard/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -41,18 +42,20 @@ export default function Dashboard() {
     const fetchPersonalTasks = async () => {
         try {
             const response = await api.get('/tasks');
-            setTasks(response.data.data);
+            setTasks(response.data.data || []);
         } catch (error) {
             console.error('Error fetching tasks:', error);
+            setTasks([]);
         }
     };
 
     const fetchUserGroups = async () => {
         try {
             const response = await api.get('/groups');
-            setGroups(response.data.data);
+            setGroups(response.data.data || []);
         } catch (error) {
             console.error('Error fetching groups:', error);
+            setGroups([]);
         }
     };
 
@@ -112,6 +115,7 @@ export default function Dashboard() {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('userId');
         navigate('/login');
     };
 

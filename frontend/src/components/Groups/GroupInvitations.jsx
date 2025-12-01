@@ -1,4 +1,3 @@
-// frontend/src/components/Groups/GroupInvitations.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import groupsService from '../../services/groups';

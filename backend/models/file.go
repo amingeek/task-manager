@@ -2,26 +2,25 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type File struct {
-	ID        uint           `gorm:"primaryKey;autoIncrement" json:"id"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Filename  string         `gorm:"not null" json:"filename"`
-	Filepath  string         `gorm:"not null" json:"filepath"`
-	FileSize  int64          `json:"file_size"`
-	MimeType  string         `json:"mime_type"`
-	UserID    uint           `gorm:"not null" json:"user_id"`
-	User      User           `gorm:"foreignKey:UserID" json:"user"`
-	TaskID    uint           `gorm:"not null" json:"task_id"`
-	Task      Task           `gorm:"foreignKey:TaskID" json:"task"`
-	Approved  bool           `gorm:"default:false" json:"approved"`
-	ApprovedBy *uint         `json:"approved_by"`
-	ApprovedAt *time.Time    `json:"approved_at"`
+	ID          uint       `gorm:"primaryKey" json:"id"`
+	TaskID      *uint      `json:"task_id"`
+	GroupTaskID *uint      `json:"group_task_id"`
+	UserID      uint       `json:"user_id" gorm:"index"`
+	FileName    string     `json:"file_name"`
+	FilePath    string     `json:"file_path"`
+	FileSize    int64      `json:"file_size"`
+	FileType    string     `json:"file_type"`
+	UploadedAt  time.Time  `json:"uploaded_at"`
+	ApprovedBy  *uint      `json:"approved_by"`
+	ApprovedAt  *time.Time `json:"approved_at"`
+
+	// Relations
+	Task      *Task      `json:"task,omitempty" gorm:"foreignKey:TaskID"`
+	GroupTask *GroupTask `json:"group_task,omitempty" gorm:"foreignKey:GroupTaskID"`
+	User      *User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 
 func (File) TableName() string {

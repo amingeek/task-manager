@@ -39,3 +39,15 @@ type GroupTaskProgress struct {
 	ApprovedBy  *uint          `json:"approved_by"`
 	ApprovedAt  *time.Time     `json:"approved_at"`
 }
+
+type Progress struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	TaskID    uint      `json:"task_id" gorm:"index"`
+	UserID    uint      `json:"user_id" gorm:"index"`
+	Status    string    `json:"status" gorm:"default:'pending'"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Relations
+	Task *Task `json:"task,omitempty" gorm:"foreignKey:TaskID"`
+	User *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}

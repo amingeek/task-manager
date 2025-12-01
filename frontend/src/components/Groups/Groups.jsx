@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import groupsService from '../../services/groups';
 import './Groups.css';
 
-export default function Groups() {
-    const [groups, setGroups] = useState([]);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showCreateForm, setShowCreateForm] = useState(false);
-    const [newGroup, setNewGroup] = useState({ name: '', description: '', userIDs: '' });
-    const [loading, setLoading] = useState(false);
+function Groups() {
     const navigate = useNavigate();
+    const [groups, setGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        description: '',
+        members: []
+    });
+    const [creating, setCreating] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searching, setSearching] = useState(false);
 
     useEffect(() => {
         fetchGroups();
@@ -17,187 +26,300 @@ export default function Groups() {
 
     const fetchGroups = async () => {
         try {
-            const response = await api.get('/groups');
-            setGroups(response.data.data);
-        } catch (error) {
-            console.error('Error fetching groups:', error);
-        }
-    };
+            setLoading(true);
+            const response = await groupsService.getGroups();
 
-    const searchGroups = async () => {
-        try {
-            const response = await api.get(`/groups/search?q=${searchQuery}`);
-            setGroups(response.data.data);
-        } catch (error) {
-            console.error('Error searching groups:', error);
-        }
-    };
+            let groupsData = response.data?.data || response.data || [];
 
-    const handleCreateGroup = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const userIDs = newGroup.userIDs.split(',').map(id => parseInt(id.trim())).filter(id => id);
-            await api.post('/groups', {
-                name: newGroup.name,
-                description: newGroup.description,
-                userIDs: userIDs
-            });
-            setNewGroup({ name: '', description: '', userIDs: '' });
-            setShowCreateForm(false);
-            fetchGroups();
-        } catch (error) {
-            alert('خطا در ایجاد گروه: ' + (error.response?.data?.error || 'Unknown error'));
+            if (groupsData && typeof groupsData === 'object' && !Array.isArray(groupsData)) {
+                groupsData = Object.values(groupsData);
+            }
+
+            setGroups(groupsData);
+        } catch (err) {
+            setError('❌ خطا در دریافت گروه‌ها');
+            console.error('❌ Fetch groups error:', err);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSearchMembers = async (query) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        try {
+            setSearching(true);
+            const response = await groupsService.searchUsers(query);
+
+            let results = response.data?.data || response.data || [];
+            if (results && typeof results === 'object' && !Array.isArray(results)) {
+                results = Object.values(results);
+            }
+
+            setSearchResults(results);
+        } catch (err) {
+            console.error('❌ Search error:', err);
+            setSearchResults([]);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleAddMemberToForm = (user) => {
+        const userId = user.id;
+
+        if (!formData.members.find(m => m.id === userId)) {
+            setFormData(prev => ({
+                ...prev,
+                members: [...prev.members, user]
+            }));
+            setSearchQuery('');
+            setSearchResults([]);
+        }
+    };
+
+    const handleRemoveMemberFromForm = (userId) => {
+        setFormData(prev => ({
+            ...prev,
+            members: prev.members.filter(m => m.id !== userId)
+        }));
+    };
+
+    const handleCreateGroup = async (e) => {
+        e.preventDefault();
+        if (!formData.name.trim()) {
+            setError('❌ نام گروه ضروری است');
+            return;
+        }
+
+        try {
+            setCreating(true);
+            setError(null);
+
+            // ایجاد گروه
+            const createResponse = await groupsService.createGroup({
+                name: formData.name.trim(),
+                description: formData.description.trim(),
+                user_ids: formData.members.map(m => m.id)
+            });
+
+            setSuccess('✅ گروه با موفقیت ایجاد شد!');
+            setFormData({ name: '', description: '', members: [] });
+            setShowCreateForm(false);
+
+            // منتظر و refresh
+            setTimeout(() => {
+                fetchGroups();
+                setSuccess(null);
+            }, 500);
+        } catch (err) {
+            setError(`❌ خطا در ایجاد گروه: ${err.response?.data?.error || err.message}`);
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    if (loading) {
+        return <div className="loading">🔄 بارگذاری گروه‌ها...</div>;
+    }
+
     return (
-        <div className="groups">
-            <div className="container">
-                <div className="groups-header">
-                    <h1>مدیریت گروه‌ها</h1>
-                    <div className="header-actions">
-                        <button
-                            onClick={() => setShowCreateForm(!showCreateForm)}
-                            className="btn btn-primary"
-                        >
-                            ایجاد گروه جدید
-                        </button>
-                        <button onClick={() => navigate('/')} className="btn btn-secondary">
-                            بازگشت به داشبورد
-                        </button>
-                    </div>
+        <div className="page-container">
+            <div className="page-header">
+                <h1>👥 گروه‌های من</h1>
+                <div className="header-actions">
+                    <button
+                        className="btn-primary"
+                        onClick={() => setShowCreateForm(!showCreateForm)}
+                    >
+                        {showCreateForm ? '❌ انصراف' : '➕ گروه جدید'}
+                    </button>
+                    <button
+                        className="btn-secondary"
+                        onClick={() => navigate('/groups/invitations')}
+                    >
+                        📩 دعوت‌نامه‌ها
+                    </button>
                 </div>
+            </div>
 
-                {/* فرم ایجاد گروه */}
-                {showCreateForm && (
-                    <div className="card create-group-form">
-                        <h3>ایجاد گروه جدید</h3>
-                        <form onSubmit={handleCreateGroup}>
-                            <div className="form-group">
-                                <label className="form-label">نام گروه</label>
+            {error && <div className="error-message">{error}</div>}
+            {success && <div className="success-message">{success}</div>}
+
+            {showCreateForm && (
+                <div className="create-group-form">
+                    <div className="form-header">
+                        <h2>✨ ایجاد گروه جدید</h2>
+                    </div>
+
+                    <form onSubmit={handleCreateGroup} className="task-form">
+                        <div className="form-group">
+                            <label>📌 نام گروه *</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="نام گروه را وارد کنید"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>📝 توضیحات</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="توضیحات گروه (اختیاری)"
+                                rows="3"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>👥 اضافه کردن اعضا (اختیاری)</label>
+                            <div className="search-box">
                                 <input
                                     type="text"
-                                    value={newGroup.name}
-                                    onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                                    className="form-input"
-                                    required
+                                    placeholder="نام کاربری یا ایمیل را جستجو کنید..."
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        handleSearchMembers(e.target.value);
+                                    }}
                                 />
+                                {searching && <div className="searching">🔍 در حال جستجو...</div>}
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">توضیحات</label>
-                                <textarea
-                                    value={newGroup.description}
-                                    onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                                    className="form-input"
-                                    rows="3"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">شناسه کاربران (با کاما جدا کنید)</label>
-                                <input
-                                    type="text"
-                                    value={newGroup.userIDs}
-                                    onChange={(e) => setNewGroup({...newGroup, userIDs: e.target.value})}
-                                    className="form-input"
-                                    placeholder="مثال: 1, 2, 3"
-                                />
-                            </div>
-                            <div className="form-actions">
-                                <button type="submit" className="btn btn-primary" disabled={loading}>
-                                    {loading ? 'در حال ایجاد...' : 'ایجاد گروه'}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowCreateForm(false)}
-                                >
-                                    انصراف
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                )}
 
-                {/* جستجو */}
-                <div className="card search-section">
-                    <div className="search-form">
-                        <input
-                            type="text"
-                            placeholder="جستجو بین گروه‌ها..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="form-input"
-                        />
-                        <button onClick={searchGroups} className="btn btn-primary">
-                            جستجو
-                        </button>
-                        <button onClick={() => { setSearchQuery(''); fetchGroups(); }} className="btn btn-secondary">
-                            نمایش همه
-                        </button>
-                    </div>
-                </div>
+                            {searchResults.length > 0 && (
+                                <div className="search-results">
+                                    {searchResults.map(user => {
+                                        const userId = user.id;
+                                        const alreadyAdded = formData.members.find(m => m.id === userId);
 
-                {/* لیست گروه‌ها */}
-                <div className="groups-list">
-                    {groups.map((group) => (
-                        <div key={group.id} className="card group-item">
-                            <div className="group-header">
-                                <div className="group-info">
-                                    <h3>{group.name}</h3>
-                                    <p className="group-description">{group.description}</p>
-                                    <div className="group-meta">
-                                        <span>سازنده: {group.creator?.username}</span>
-                                        <span>اعضا: {group.members?.length} نفر</span>
-                                        <span>تسک‌ها: {group.tasks?.length} مورد</span>
-                                    </div>
+                                        return (
+                                            <div key={userId} className="search-result">
+                                                <span>👤 {user.username} ({user.email})</span>
+                                                <button
+                                                    type="button"
+                                                    className={alreadyAdded ? 'btn-remove' : 'btn-add'}
+                                                    onClick={() => {
+                                                        if (!alreadyAdded) {
+                                                            handleAddMemberToForm(user);
+                                                        }
+                                                    }}
+                                                    disabled={alreadyAdded}
+                                                    style={{
+                                                        opacity: alreadyAdded ? 0.6 : 1,
+                                                        cursor: alreadyAdded ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                >
+                                                    {alreadyAdded ? '✅ اضافه شد' : '➕ اضافه'}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="group-actions">
-                                    <button
-                                        onClick={() => navigate(`/groups/${group.id}/tasks`)}
-                                        className="btn btn-primary"
-                                    >
-                                        مشاهده تسک‌ها
-                                    </button>
-                                    <button
-                                        onClick={() => navigate(`/groups/${group.id}/add-task`)}
-                                        className="btn btn-secondary"
-                                    >
-                                        افزودن تسک
-                                    </button>
-                                </div>
-                            </div>
+                            )}
+                        </div>
 
-                            {/* اعضای گروه */}
-                            <div className="group-members">
-                                <h4>اعضای گروه:</h4>
+                        {formData.members.length > 0 && (
+                            <div className="form-group">
+                                <label>📋 اعضای منتخب ({formData.members.length})</label>
                                 <div className="members-list">
-                                    {group.members?.map((member) => (
-                                        <div key={member.id} className="member-item">
-                                            <span className="member-name">{member.user?.username}</span>
-                                            <span className={`member-role ${member.role}`}>
-                        {member.role === 'admin' ? 'مدیر' : 'عضو'}
-                      </span>
-                                            <span className={`member-status ${member.accepted ? 'accepted' : 'pending'}`}>
-                        {member.accepted ? 'تایید شده' : 'در انتظار'}
-                      </span>
+                                    {formData.members.map(member => (
+                                        <div key={member.id} className="member-checkbox">
+                                            <label style={{ display: 'flex', alignItems: 'center' }}>
+                                                ✅ {member.username} ({member.email})
+                                            </label>
+                                            <button
+                                                type="button"
+                                                className="btn-remove"
+                                                onClick={() => handleRemoveMemberFromForm(member.id)}
+                                                style={{ padding: '4px 8px', fontSize: '12px' }}
+                                            >
+                                                🗑️ حذف
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        )}
 
-                {groups.length === 0 && (
-                    <div className="empty-state">
-                        <p>هنوز گروهی وجود ندارد!</p>
-                        <p className="empty-state-sub">اولین گروه خود را ایجاد کنید.</p>
-                    </div>
-                )}
-            </div>
+                        <div className="form-actions">
+                            <button type="submit" className="btn-primary" disabled={creating}>
+                                {creating ? '⏳ در حال ایجاد...' : '✅ ایجاد گروه'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => {
+                                    setShowCreateForm(false);
+                                    setFormData({ name: '', description: '', members: [] });
+                                    setError(null);
+                                }}
+                            >
+                                ❌ انصراف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {groups && groups.length > 0 ? (
+                <div className="members-grid">
+                    {groups.map((group) => {
+                        const groupId = group.id;
+                        const memberCount = group.members?.length || 0;
+
+                        if (!groupId) {
+                            return null;
+                        }
+
+                        return (
+                            <div key={groupId} className="member-card">
+                                <div className="member-header">
+                                    <span className="member-name">📁 {group.name}</span>
+                                    <span className="member-role admin">👑 مدیر</span>
+                                </div>
+                                <p className="member-email">{group.description || 'بدون توضیح'}</p>
+                                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+                                    👥 اعضا: {memberCount}
+                                </p>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => navigate(`/groups/${groupId}/add-task`)}
+                                        style={{ flex: 1, minWidth: '100px' }}
+                                    >
+                                        ➕ تسک
+                                    </button>
+                                    <button
+                                        className="btn-edit"
+                                        onClick={() => navigate(`/groups/${groupId}/settings`)}
+                                        style={{ flex: 1, minWidth: '100px' }}
+                                    >
+                                        ⚙️ تنظیمات
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="empty-state">
+                    <p>📭 هیچ گروهی وجود ندارد</p>
+                    <p className="empty-state-sub">
+                        برای شروع، اولین گروه خود را ایجاد کنید
+                    </p>
+                    <button className="btn-primary" onClick={() => setShowCreateForm(true)}>
+                        ➕ ایجاد گروه جدید
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
+
+export default Groups;

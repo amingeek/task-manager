@@ -1,100 +1,85 @@
-// backend/routes/routes.go
-
 package routes
 
 import (
+	"github.com/gin-gonic/gin"
 	"task-manager/controllers"
 	"task-manager/middleware"
-
-	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes(router *gin.Engine) {
-	router.Use(middleware.CORSMiddleware())
-
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
-
-	// ایجاد پوشه آپلود
-	router.Static("/uploads", "./uploads")
-
+	// Public routes
 	public := router.Group("/api")
-
-	// Authentication routes
-	public.POST("/register", controllers.Register)
-	public.POST("/login", controllers.Login)
+	{
+		public.POST("/register", controllers.Register)
+		public.POST("/login", controllers.Login)
+		public.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok"})
+		})
+	}
 
 	// Protected routes
 	protected := router.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
+	{
+		// User routes
+		protected.GET("/me", controllers.GetCurrentUser)
+		protected.PUT("/profile", controllers.UpdateProfile)
+		protected.GET("/users/search", controllers.SearchUsers)
 
-	// ==================== User Routes ====================
-	protected.GET("/me", controllers.GetCurrentUser)
-	protected.GET("/users/search", controllers.SearchUsers)
-	protected.PUT("/profile", controllers.UpdateProfile)
+		// Personal Tasks routes
+		protected.GET("/tasks", controllers.GetTasks)
+		protected.GET("/tasks/:id", controllers.GetTask)
+		protected.POST("/tasks", controllers.CreateTask)
+		protected.PUT("/tasks/:id", controllers.UpdateTask)
+		protected.DELETE("/tasks/:id", controllers.DeleteTask)
+		protected.PUT("/tasks/:id/progress", controllers.UpdatePersonalProgress)
+		protected.GET("/tasks/:id/progress", controllers.GetPersonalProgress)
 
-	// ==================== Personal Task Routes ====================
-	protected.GET("/tasks", controllers.GetTasks)
-	protected.GET("/tasks/:id", controllers.GetTask)
-	protected.POST("/tasks", controllers.CreateTask)
-	protected.PUT("/tasks/:id", controllers.UpdateTask)
-	protected.DELETE("/tasks/:id", controllers.DeleteTask)
+		// File routes
+		protected.POST("/tasks/:id/files", controllers.UploadFile)
+		protected.GET("/tasks/:id/files", controllers.GetTaskFiles)
+		protected.GET("/files/:id", controllers.DownloadFile)
+		protected.DELETE("/files/:id", controllers.DeleteFile)
 
-	// Personal task progress
-	protected.PUT("/tasks/:id/progress", controllers.UpdatePersonalProgress)
-	protected.GET("/tasks/:id/progress", controllers.GetPersonalProgress)
+		// Analytics routes
+		protected.GET("/analytics/streak", controllers.GetStreak)
+		protected.GET("/analytics/summary", controllers.GetAnalyticsSummary)
 
-	// ==================== Group Routes ====================
-	protected.GET("/groups", controllers.GetUserGroups)
-	protected.POST("/groups", controllers.CreateGroup)        // اضافه شد
-	protected.GET("/groups/:id", controllers.GetGroupDetails) // اضافه شد
-	protected.PUT("/groups/:id", controllers.UpdateGroup)     // اضافه شد
-	protected.DELETE("/groups/:id", controllers.DeleteGroup)  // اضافه شد
+		// Notification routes
+		protected.GET("/notifications", controllers.GetNotifications)
+		protected.PUT("/notifications/:id/read", controllers.MarkAsRead)
+		protected.DELETE("/notifications/:id", controllers.DeleteNotification)
 
-	// Group members
-	protected.POST("/groups/:id/members", controllers.AddGroupMembers)
-	protected.DELETE("/groups/:id/members/:user_id", controllers.RemoveMember)
-	protected.POST("/groups/:id/members/:user_id/accept", controllers.AcceptInvitation)
+		// ✅ Group routes - اصلاح‌شده
+		protected.GET("/groups", controllers.GetUserGroups)
+		protected.POST("/groups", controllers.CreateGroup)
+		protected.GET("/groups/:id", controllers.GetGroupDetails)
+		protected.PUT("/groups/:id", controllers.UpdateGroup)
+		protected.DELETE("/groups/:id", controllers.DeleteGroup)
 
-	// ==================== Group Task Routes ====================
-	protected.POST("/groups/:id/tasks", controllers.CreateGroupTask)
-	protected.PUT("/groups/:id/tasks/:task_id", controllers.UpdateGroupTask)
-	protected.DELETE("/groups/:id/tasks/:task_id", controllers.DeleteGroupTask)
-	protected.GET("/groups/:id/tasks", controllers.GetGroupTasks)
+		// Group Members routes
+		protected.POST("/groups/:id/members", controllers.AddGroupMembers)
+		protected.GET("/groups/:id/members", controllers.GetGroupMembers)
+		protected.DELETE("/groups/:id/members/:user_id", controllers.RemoveMember)
 
-	// Group task progress (تسک گروهی)
-	protected.PUT("/groups/:id/tasks/:task_id/progress", controllers.UpdateGroupProgress)
-	protected.GET("/groups/:id/tasks/:task_id/progress", controllers.GetGroupProgress)
-	protected.GET("/groups/invitations", controllers.GetPendingInvitations) // جدید
-	protected.POST("/groups/:id/accept", controllers.AcceptInvitation)      // تغییر مسیر برای سادگی
+		// ✅ Invitations routes - جدید
+		protected.GET("/groups/invitations", controllers.GetPendingInvitations)
+		protected.POST("/groups/:id/accept-invitation", controllers.AcceptInvitation)
+		protected.POST("/groups/:id/reject-invitation", controllers.RejectInvitation)
 
-	// Approve group task files (تایید فایل توسط مدیر)
-	protected.POST("/groups/:id/tasks/:task_id/files/approve", controllers.ApproveGroupTaskFile)
+		// Group Tasks routes
+		protected.GET("/groups/:id/tasks", controllers.GetGroupTasks)
+		protected.POST("/groups/:id/tasks", controllers.CreateGroupTask)
+		protected.PUT("/groups/:id/tasks/:task_id", controllers.UpdateGroupTask)
+		protected.DELETE("/groups/:id/tasks/:task_id", controllers.DeleteGroupTask)
+		protected.PUT("/groups/:id/tasks/:task_id/progress", controllers.UpdateGroupProgress)
+		protected.GET("/groups/:id/tasks/:task_id/progress", controllers.GetGroupProgress)
 
-	// ==================== File Routes ====================
+		// Group Task Files routes
+		protected.GET("/groups/:id/tasks/:task_id/files/:user_id", controllers.GetGroupTaskFilesByUser)
+		protected.POST("/groups/:id/tasks/:task_id/files/approve", controllers.ApproveGroupTaskFile)
+	}
 
-	// آپلود فایل برای تسک (شخصی یا گروهی)
-	protected.POST("/tasks/:id/files", controllers.UploadFile)
-
-	// دریافت فایلهای یک تسک
-	protected.GET("/tasks/:id/files", controllers.GetTaskFiles)
-
-	// دریافت فایلهای آپلود شده توسط یک کاربر برای تسک گروهی
-	protected.GET("/groups/:id/tasks/:task_id/files/:user_id", controllers.GetGroupTaskFilesByUser)
-
-	// دانلود فایل
-	protected.GET("/files/:id", controllers.DownloadFile)
-
-	// حذف فایل
-	protected.DELETE("/files/:id", controllers.DeleteFile)
-
-	// ==================== Notification Routes ====================
-	protected.GET("/notifications", controllers.GetNotifications)
-	protected.PUT("/notifications/:id/read", controllers.MarkAsRead)
-	protected.DELETE("/notifications/:id", controllers.DeleteNotification)
-
-	// ==================== Analytics Routes ====================
-	protected.GET("/analytics/streak", controllers.GetStreak)
-	protected.GET("/analytics/summary", controllers.GetAnalyticsSummary)
+	// Static files
+	router.Static("/uploads", "./uploads")
 }
